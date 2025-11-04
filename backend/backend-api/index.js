@@ -1,27 +1,23 @@
-// backend-api/index.js
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import problemRoutes from "./src/routes/problem.routes.js";
+import commentRoutes from "./src/routes/comment.routes.js";
+import uploadRoutes from "./src/routes/upload.routes.js";
+import path from "path";
 
+dotenv.config({ path: "../.env" });
 const app = express();
-const PORT = 5001;
 
 app.use(cors());
 app.use(express.json());
 
-// ✅ 기본 테스트 라우트
-app.get("/", (req, res) => {
-  res.send("✅ backend-api 서버 실행 중 (문제 신고 / 댓글 API)");
-});
+app.use("/uploads", express.static(path.resolve("file-storage")));
 
-// ✅ 예시: 문제 목록 불러오기
-app.get("/issues", (req, res) => {
-  const dummyIssues = [
-    { id: 1, title: "교실 전등이 꺼져요", status: "대기중", votes: 12 },
-    { id: 2, title: "체육관 바닥 미끄러움", status: "처리중", votes: 8 },
-  ];
-  res.json(dummyIssues);
-});
+app.use("/problems", problemRoutes);
+app.use("/problems", commentRoutes);
+app.use("/upload", uploadRoutes); // ✅ 추가
 
-app.listen(PORT, () => {
-  console.log(`🚀 backend-api running on http://localhost:${PORT}`);
-});
+app.listen(process.env.API_PORT || 4002, () =>
+  console.log(`✅ API server running on port ${process.env.API_PORT || 4002}`)
+);
