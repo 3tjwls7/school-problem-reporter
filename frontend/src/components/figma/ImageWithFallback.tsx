@@ -16,14 +16,14 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
       style={style}
     >
       <div className="flex items-center justify-center w-full h-full">
-        {/* ? alt ¹®±¸ ¼öÁ¤ */}
-        <img src={ERROR_IMG_SRC} alt="ÀÌ¹ÌÁö¸¦ ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù" {...rest} data-original-url={src} />
+        {/* âœ… alt ë¬¸êµ¬ ìˆ˜ì • */}
+        <img src={ERROR_IMG_SRC} alt="ì´ë¯¸ì§€ë¥¼ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤" {...rest} data-original-url={src} />
       </div>
     </div>
   ) : (
     <img
       src={src}
-      alt={alt || 'ÇÐ±³ »çÁø'} // alt ¾øÀ» ¶§ ±âº» ¹®±¸
+      alt={alt || 'í•™êµ ì‚¬ì§„'} // alt ì—†ì„ ë•Œ ê¸°ë³¸ ë¬¸êµ¬
       className={className}
       style={style}
       {...rest}
