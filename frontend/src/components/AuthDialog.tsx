@@ -9,7 +9,7 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
 import { Checkbox } from "./ui/checkbox";
 
 interface AuthDialogProps {
@@ -58,7 +58,12 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent
+        className="
+          fixed top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2
+          bg-background border shadow-lg rounded-xl sm:max-w-[425px] p-6
+        "
+      >
         <DialogHeader>
           <DialogTitle>로그인 / 회원가입</DialogTitle>
           <DialogDescription>

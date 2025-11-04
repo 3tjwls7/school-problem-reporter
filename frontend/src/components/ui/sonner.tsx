@@ -2,10 +2,10 @@
 
 import { Toaster as Sonner } from "sonner";
 
-export const Toaster = (props: any) => {
+export function Toaster(props: any) {
   return (
     <Sonner
-      theme="light" // ✅ React용 기본 테마 (Next.js 아님)
+      theme="light"
       className="toaster group"
       style={
         {
@@ -17,4 +17,4 @@ export const Toaster = (props: any) => {
       {...props}
     />
   );
-};
+}

@@ -28,15 +28,23 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+function CardTitle({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & { children?: React.ReactNode }) {
   return (
     <h4
       data-slot="card-title"
       className={cn("leading-none", className)}
       {...props}
-    />
+    >
+      {/* ? 내용이 없을 경우 대체 텍스트 */}
+      {children || <span className="sr-only">제목 없음</span>}
+    </h4>
   );
 }
+
 
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
