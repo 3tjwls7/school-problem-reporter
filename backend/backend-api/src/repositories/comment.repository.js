@@ -2,7 +2,11 @@ import db from "../../../db.js";
 
 export const getCommentsByProblemId = async (problemId) => {
   const [rows] = await db.execute(
-    "SELECT c.*, u.username FROM comments c JOIN users u ON c.authorId = u.id WHERE c.problemId = ? ORDER BY c.createdAt ASC",
+    `SELECT c.*, u.username 
+     FROM comments c 
+     JOIN users u ON c.authorId = u.id 
+     WHERE c.problemId = ? 
+     ORDER BY c.createdAt ASC`,
     [problemId]
   );
   return rows;
@@ -15,10 +19,13 @@ export const addComment = async (problemId, authorId, content) => {
   );
 };
 
-export const deleteComment = async (commentId, authorId, role) => {
-  if (role === "admin") {
+export const deleteComment = async (commentId, authorId, isAdmin) => {
+  if (isAdmin) {
     await db.execute("DELETE FROM comments WHERE id = ?", [commentId]);
   } else {
-    await db.execute("DELETE FROM comments WHERE id = ? AND authorId = ?", [commentId, authorId]);
+    await db.execute("DELETE FROM comments WHERE id = ? AND authorId = ?", [
+      commentId,
+      authorId,
+    ]);
   }
 };
