@@ -13,8 +13,8 @@ export const createCommentService = async (problemId, authorId, content) => {
     throw new Error("댓글 내용을 입력해주세요.");
   }
 
-  await addComment(problemId, authorId, content);
-  return { message: "댓글이 작성되었습니다!" };
+  const newComment = await addComment(problemId, authorId, content);
+  return newComment;
 };
 
 export const deleteCommentService = async (commentId, authorId, role) => {

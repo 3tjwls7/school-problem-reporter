@@ -1,9 +1,14 @@
 import db from "../../../db.js";
 
 export const getAllProblems = async () => {
-  const [rows] = await db.execute(
-    "SELECT * FROM problems ORDER BY createdAt DESC"
-  );
+  const [rows] = await db.execute(`
+    SELECT 
+      p.*, 
+      u.username
+    FROM problems p
+    JOIN users u ON p.authorId = u.id
+    ORDER BY p.createdAt DESC
+  `);
   return rows;
 };
 

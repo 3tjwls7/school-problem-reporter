@@ -13,11 +13,20 @@ export const getCommentsByProblemId = async (problemId) => {
 };
 
 export const addComment = async (problemId, authorId, content) => {
-  await db.execute(
+  const [result] = await db.execute(
     "INSERT INTO comments (problemId, authorId, content) VALUES (?, ?, ?)",
     [problemId, authorId, content]
   );
+  const [rows] = await db.execute(
+    `SELECT c.*, u.username 
+     FROM comments c 
+     JOIN users u ON c.authorId = u.id 
+     WHERE c.id = ?`,
+    [result.insertId]
+  );
+  return rows[0];
 };
+
 
 export const deleteComment = async (commentId, authorId, role) => {
   if (role === "admin") {
