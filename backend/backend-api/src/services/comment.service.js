@@ -18,7 +18,6 @@ export const createCommentService = async (problemId, authorId, content) => {
 };
 
 export const deleteCommentService = async (commentId, authorId, role) => {
-  const isAdmin = role === "admin";
-  await deleteComment(commentId, authorId, isAdmin ? null : authorId);
+  await deleteComment(commentId, authorId, role);
   return { message: "댓글이 삭제되었습니다!" };
 };

@@ -19,13 +19,18 @@ export const addComment = async (problemId, authorId, content) => {
   );
 };
 
-export const deleteComment = async (commentId, authorId, isAdmin) => {
-  if (isAdmin) {
+export const deleteComment = async (commentId, authorId, role) => {
+  if (role === "admin") {
+    // 관리자 → 모든 댓글 삭제 가능
     await db.execute("DELETE FROM comments WHERE id = ?", [commentId]);
   } else {
-    await db.execute("DELETE FROM comments WHERE id = ? AND authorId = ?", [
-      commentId,
-      authorId,
-    ]);
+    // 일반 사용자 → 자기 댓글만 삭제 가능
+    const [result] = await db.execute(
+      "DELETE FROM comments WHERE id = ? AND authorId = ?",
+      [commentId, authorId]
+    );
+    if (result.affectedRows === 0) {
+      throw new Error("본인이 작성한 댓글만 삭제할 수 있습니다.");
+    }
   }
 };

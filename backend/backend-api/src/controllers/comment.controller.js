@@ -29,8 +29,8 @@ export const createComment = async (req, res) => {
 
 export const removeComment = async (req, res) => {
   try {
-    const { cid } = req.params;
-    const { id: authorId, role } = req.user;
+    const { cid } = req.params;        // 댓글 ID
+    const { id: authorId, role } = req.user; // 로그인한 사용자
 
     const result = await deleteCommentService(cid, authorId, role);
     res.json(result);
