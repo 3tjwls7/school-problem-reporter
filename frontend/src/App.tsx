@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { ProblemList } from "./components/ProblemList";
 import { ProblemDetail, Comment } from "./components/ProblemDetail";
@@ -7,6 +7,8 @@ import { AuthDialog } from "./components/AuthDialog";
 import { Problem } from "./components/ProblemCard";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
+import { loginAPI, signupAPI } from "./api/auth";
+import api from "./api/axios";
 
 // Mock data
 const initialProblems: Problem[] = [
@@ -99,6 +101,22 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      api
+        .get("/auth/verify")
+        .then((res) => {
+          setIsLoggedIn(true);
+          setCurrentUser(res.data.user.email);
+          setIsAdmin(res.data.user.role === "admin");
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+        });
+    }
+  }, []);
+
 
   const handleVote = (id: number) => {
     setProblems(
@@ -141,26 +159,44 @@ export default function App() {
     toast.success("문제가 신고되었습니다!");
   };
 
-  const handleLogin = (username: string, password: string) => {
-    // Mock login
-    setIsLoggedIn(true);
-    setCurrentUser(username);
-    setIsAuthDialogOpen(false);
-    toast.success(`${username}님, 환영합니다!`);
+  
+  
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      const res = await loginAPI(username, password);
+      localStorage.setItem("token", res.token); // JWT 저장
+      setIsLoggedIn(true);
+      setCurrentUser(username);
+      setIsAuthDialogOpen(false);
+      toast.success(`${username}님, 환영합니다!`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "로그인 실패");
+    }
   };
 
-  const handleSignup = (username: string, email: string, password: string, isAdminRole: boolean) => {
-    // Mock signup
-    setIsLoggedIn(true);
-    setCurrentUser(username);
-    setIsAdmin(isAdminRole);
-    setIsAuthDialogOpen(false);
-    toast.success(
-      isAdminRole 
-        ? `${username}님, 관리자로 가입되었습니다!` 
-        : "회원가입이 완료되었습니다!"
-    );
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // JWT 삭제
+    setIsLoggedIn(false);
+    setCurrentUser("");
+    setIsAdmin(false);
+    toast.success("로그아웃되었습니다.");
   };
+
+  const handleSignup = async (
+    username: string,
+    email: string,
+    password: string,
+    isAdminRole: boolean
+  ) => {
+    try {
+      await signupAPI(username, email, password, isAdminRole);
+      toast.success("회원가입이 완료되었습니다! 로그인해주세요.");
+      setIsAuthDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "회원가입 실패");
+    }
+  };
+
 
   const handleAddComment = (content: string) => {
     if (!selectedProblemId) return;
@@ -243,6 +279,7 @@ export default function App() {
           }
         }}
         onLoginClick={() => setIsAuthDialogOpen(true)}
+        onLogoutClick={handleLogout}
         isLoggedIn={isLoggedIn}
         username={currentUser}
       />

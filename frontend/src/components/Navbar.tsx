@@ -5,11 +5,12 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 interface NavbarProps {
   onCreateClick: () => void;
   onLoginClick: () => void;
+  onLogoutClick: () => void;
   isLoggedIn: boolean;
   username?: string;
 }
 
-export function Navbar({ onCreateClick, onLoginClick, isLoggedIn, username }: NavbarProps) {
+export function Navbar({ onCreateClick, onLoginClick, onLogoutClick, isLoggedIn, username }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
@@ -37,6 +38,13 @@ export function Navbar({ onCreateClick, onLoginClick, isLoggedIn, username }: Na
                 </div>
                 <span className="text-sm">{username}</span>
               </div>
+              <Button
+                variant="outline"
+                onClick={onLogoutClick} //  로그아웃 이벤트 연결
+                className="shadow-sm"
+              >
+                로그아웃
+              </Button>
             </>
           ) : (
             <Button onClick={onLoginClick}>
@@ -72,6 +80,14 @@ export function Navbar({ onCreateClick, onLoginClick, isLoggedIn, username }: Na
                       <PlusCircle className="h-5 w-5" />
                       문제 신고
                     </Button>
+                    <Button
+                      variant="outline"
+                      onClick={onLogoutClick} //  로그아웃 이벤트 연결
+                      className="w-full"
+                    >
+                      로그아웃
+                    </Button>
+
                   </>
                 ) : (
                   <Button onClick={onLoginClick} className="w-full">
