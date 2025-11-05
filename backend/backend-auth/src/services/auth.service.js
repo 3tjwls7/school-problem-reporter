@@ -34,9 +34,19 @@ export const loginService = async (email, password) => {
 
   const token = generateToken({
     id: user.id,
+    username: user.username,
     email: user.email,
     role: user.role,
   });
 
-  return { message: "로그인 성공", token };
+  return {
+    message: "로그인 성공",
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
 };

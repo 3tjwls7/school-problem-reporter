@@ -16,8 +16,8 @@ app.use("/uploads", express.static(path.resolve("file-storage")));
 
 app.use("/problems", problemRoutes);
 app.use("/problems", commentRoutes);
-app.use("/upload", uploadRoutes); //  추가
+app.use("/uploads", express.static(path.resolve("file-storage")));
 
 app.listen(process.env.API_PORT || 4002, () =>
-  console.log(`✅ API server running on port ${process.env.API_PORT || 4002}`)
+  console.log(`API server running on port ${process.env.API_PORT || 4002}`)
 );

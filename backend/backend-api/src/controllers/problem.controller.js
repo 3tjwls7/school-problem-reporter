@@ -15,8 +15,14 @@ export const getProblems = async (req, res) => {
 
 export const createNewProblem = async (req, res) => {
   try {
-    const { title, description, location, imageUrl } = req.body;
+    const { title, description, location } = req.body;
     const authorId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "이미지 파일이 없습니다." });
+    }
+
+    const imageUrl = `/uploads/${req.file.filename}`; // multer가 만든 파일 경로 사용
 
     const result = await createProblemService({
       title,
@@ -28,9 +34,11 @@ export const createNewProblem = async (req, res) => {
 
     res.status(201).json(result);
   } catch (err) {
+    console.error("❌ 문제 등록 에러:", err);
     res.status(400).json({ message: err.message });
   }
 };
+
 
 export const changeProblemStatus = async (req, res) => {
   try {
