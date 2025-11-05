@@ -39,7 +39,7 @@ export function AuthDialog({
       setLoginUsername("");
       setLoginPassword("");
     } else {
-      alert("아이디와 비밀번호를 입력해주세요.");
+      alert("이메일과 비밀번호를 입력해주세요.");
     }
   };
 
@@ -81,10 +81,10 @@ export function AuthDialog({
           <TabsContent value="login" className="mt-6">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-username">아이디</Label>
+                <Label htmlFor="login-username">이메일</Label>
                 <Input
                   id="login-username"
-                  placeholder="아이디를 입력하세요"
+                  placeholder="이메일을 입력하세요"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   className="border-2"
@@ -111,10 +111,10 @@ export function AuthDialog({
           <TabsContent value="signup" className="mt-6">
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-username">아이디</Label>
+                <Label htmlFor="signup-username">이메일</Label>
                 <Input
                   id="signup-username"
-                  placeholder="아이디를 입력하세요"
+                  placeholder="이메일을 입력하세요"
                   value={signupUsername}
                   onChange={(e) => setSignupUsername(e.target.value)}
                   className="border-2"

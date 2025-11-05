@@ -44,10 +44,15 @@ export function ProblemCard({ problem, onVote, onClick }: ProblemCardProps) {
         onClick={() => onClick(problem.id)}
       >
         <ImageWithFallback
-          src={problem.imageUrl}
+          src={
+            problem.imageUrl.startsWith("http")
+              ? problem.imageUrl
+              : `http://localhost:4002${problem.imageUrl}`
+          }
           alt={problem.title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+
         <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/5" />
         {problem.status && (
           <Badge

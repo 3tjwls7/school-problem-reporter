@@ -87,10 +87,15 @@ export function ProblemDetail({
       {/* Problem Image */}
       <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 shadow-lg">
         <ImageWithFallback
-          src={problem.imageUrl}
+          src={
+            problem.imageUrl.startsWith("http")
+              ? problem.imageUrl
+              : `http://localhost:4002${problem.imageUrl}`
+          }
           alt={problem.title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+
         {problem.status && (
           <Badge
             className={`absolute right-4 top-4 border shadow-sm ${statusColors[problem.status]}`}

@@ -19,16 +19,12 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Upload, X } from "lucide-react";
+import { createProblemAPI } from "../api/problem";
 
 interface CreateProblemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (problem: {
-    title: string;
-    description: string;
-    location: string;
-    imageUrl: string;
-  }) => void;
+  onSubmit: () => void; // 등록 완료 후 실행할 함수
 }
 
 const locations = [
@@ -53,50 +49,52 @@ export function CreateProblemDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      setFile(selected);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(selected);
     }
   };
 
-  const handleSubmit = () => {
-    if (!title || !description || !location || !imagePreview) {
+  const handleSubmit = async () => {
+    if (!title || !description || !location || !file) {
       alert("모든 필드를 입력해주세요.");
       return;
     }
 
-    onSubmit({
-      title,
-      description,
-      location,
-      imageUrl: imagePreview,
-    });
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("location", location);
+    formData.append("image", file);
 
-    // Reset form
-    setTitle("");
-    setDescription("");
-    setLocation("");
-    setImagePreview("");
+    try {
+      await createProblemAPI(formData); // ✅ FormData 전송
+      alert("문제가 신고되었습니다!");
+      onOpenChange(false);
+      onSubmit();
+
+      // 입력 초기화
+      setTitle("");
+      setDescription("");
+      setLocation("");
+      setFile(null);
+      setImagePreview("");
+    } catch (err) {
+      console.error(err);
+      alert("문제 신고 실패");
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="
-          fixed top-[50%] left-[53%]
-          -translate-x-1/2 -translate-y-1/2
-          max-h-[90vh] overflow-y-auto sm:max-w-[550px]
-          bg-background border shadow-xl rounded-xl p-8
-        "
-      >
-
+      <DialogContent className="fixed top-[50%] left-[53%] -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto sm:max-w-[550px] bg-background border shadow-xl rounded-xl p-8">
         <DialogHeader>
           <DialogTitle>문제 신고하기</DialogTitle>
           <DialogDescription>
@@ -106,21 +104,20 @@ export function CreateProblemDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-4">
-          {/* Image Upload */}
+          {/* 이미지 업로드 */}
           <div className="space-y-2">
             <Label htmlFor="image">사진 *</Label>
             {imagePreview ? (
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 shadow-md">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-full w-full object-cover"
-                />
+                <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="absolute right-2 top-2 shadow-md"
-                  onClick={() => setImagePreview("")}
+                  className="absolute right-2 top-2"
+                  onClick={() => {
+                    setImagePreview("");
+                    setFile(null);
+                  }}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -128,16 +125,14 @@ export function CreateProblemDialog({
             ) : (
               <label
                 htmlFor="image"
-                className="flex aspect-video w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-secondary/50 transition-all hover:border-primary hover:bg-secondary"
+                className="flex aspect-video w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-secondary/50 hover:border-primary hover:bg-secondary"
               >
                 <div className="text-center">
                   <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                     <Upload className="h-6 w-6 text-primary" />
                   </div>
                   <p className="text-sm">클릭하여 사진 업로드</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    JPG, PNG 형식 지원
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">JPG, PNG 형식 지원</p>
                 </div>
                 <input
                   id="image"
@@ -150,7 +145,7 @@ export function CreateProblemDialog({
             )}
           </div>
 
-          {/* Title */}
+          {/* 제목 */}
           <div className="space-y-2">
             <Label htmlFor="title">제목 *</Label>
             <Input
@@ -162,7 +157,7 @@ export function CreateProblemDialog({
             />
           </div>
 
-          {/* Location */}
+          {/* 위치 */}
           <div className="space-y-2">
             <Label htmlFor="location">위치 *</Label>
             <Select value={location} onValueChange={setLocation}>
@@ -179,7 +174,7 @@ export function CreateProblemDialog({
             </Select>
           </div>
 
-          {/* Description */}
+          {/* 설명 */}
           <div className="space-y-2">
             <Label htmlFor="description">상세 설명 *</Label>
             <Textarea
@@ -197,7 +192,7 @@ export function CreateProblemDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
           </Button>
-          <Button onClick={handleSubmit} className="shadow-sm">신고하기</Button>
+          <Button onClick={handleSubmit}>신고하기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

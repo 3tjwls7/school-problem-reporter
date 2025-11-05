@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "./axiosAuth";
 
 // 회원가입 요청
 export const signupAPI = async (
@@ -26,3 +26,4 @@ export const loginAPI = async (emailOrUsername: string, password: string) => {
   });
   return res.data;
 };
+

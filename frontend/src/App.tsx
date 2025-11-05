@@ -8,50 +8,13 @@ import { Problem } from "./components/ProblemCard";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { loginAPI, signupAPI } from "./api/auth";
-import api from "./api/axios";
+import {
+  getProblemsAPI,
+  updateProblemStatusAPI,
+} from "./api/problem";
 
-// Mock data
-const initialProblems: Problem[] = [
-  {
-    id: 1,
-    title: "본관 3층 화장실 문 고장",
-    description: "3층 남자 화장실 첫 번째 칸 문이 잠기지 않습니다. 손잡이가 헐거워져서 사용이 불편합니다.",
-    location: "본관 3층",
-    imageUrl: "https://images.unsplash.com/photo-1729799959058-bda08177a84c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2hvb2wlMjBmYWNpbGl0eSUyMHByb2JsZW18ZW58MXx8fHwxNzYyMTY0NTc1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    votes: 24,
-    commentCount: 5,
-    createdAt: "2024-11-01",
-    author: "김민준",
-    hasVoted: false,
-    status: "in-progress",
-  },
-  {
-    id: 2,
-    title: "도서관 의자 파손",
-    description: "도서관 2층 열람실 의자 여러 개가 파손되어 있습니다. 앉으면 삐걱거리고 불안정합니다.",
-    location: "도서관",
-    imageUrl: "https://images.unsplash.com/photo-1673180022058-308ce2f35d5a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicm9rZW4lMjBkZXNrJTIwY2xhc3Nyb29tfGVufDF8fHx8MTc2MjE2NDU3NHww&ixlib=rb-4.1.0&q=80&w=1080",
-    votes: 18,
-    commentCount: 3,
-    createdAt: "2024-10-30",
-    author: "이서연",
-    hasVoted: false,
-    status: "pending",
-  },
-  {
-    id: 3,
-    title: "체육관 조명 고장",
-    description: "체육관 왼쪽 구역 조명 3개가 깜빡거리고 있습니다. 운동할 때 눈이 피로합니다.",
-    location: "체육관",
-    imageUrl: "https://images.unsplash.com/photo-1706969151544-dfefd704a3b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2hvb2wlMjBidWlsZGluZyUyMG1haW50ZW5hbmNlfGVufDF8fHx8MTc2MjE2NDU3NXww&ixlib=rb-4.1.0&q=80&w=1080",
-    votes: 31,
-    commentCount: 8,
-    createdAt: "2024-10-28",
-    author: "박지호",
-    hasVoted: false,
-    status: "pending",
-  },
-];
+import api from "./api/axiosAuth";
+
 
 const mockComments: { [key: number]: Comment[] } = {
   1: [
@@ -93,7 +56,7 @@ const mockComments: { [key: number]: Comment[] } = {
 };
 
 export default function App() {
-  const [problems, setProblems] = useState<Problem[]>(initialProblems);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [comments, setComments] = useState<{ [key: number]: Comment[] }>(mockComments);
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -118,6 +81,29 @@ export default function App() {
   }, []);
 
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      api
+        .get("/auth/verify")
+        .then((res) => {
+          setIsLoggedIn(true);
+          setCurrentUser(res.data.user.username);
+          setIsAdmin(res.data.user.role === "admin");
+        })
+        .catch(() => localStorage.removeItem("token"));
+    }
+
+    // ✅ 문제 목록 불러오기
+    getProblemsAPI()
+      .then((data) => {
+        setProblems(data);
+      })
+      .catch(() => toast.error("문제 목록을 불러오지 못했습니다."));
+  }, []);
+
+
+
   const handleVote = (id: number) => {
     setProblems(
       problems.map((p) => {
@@ -137,42 +123,25 @@ export default function App() {
         : "공감했습니다!"
     );
   };
-
-  const handleCreateProblem = (newProblem: {
-    title: string;
-    description: string;
-    location: string;
-    imageUrl: string;
-  }) => {
-    const problem: Problem = {
-      id: Math.max(...problems.map((p) => p.id)) + 1,
-      ...newProblem,
-      votes: 0,
-      commentCount: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      author: currentUser,
-      hasVoted: false,
-      status: "pending",
-    };
-    setProblems([...problems, problem]);
-    setIsCreateDialogOpen(false);
-    toast.success("문제가 신고되었습니다!");
-  };
-
   
   
-  const handleLogin = async (username: string, password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     try {
-      const res = await loginAPI(username, password);
-      localStorage.setItem("token", res.token); // JWT 저장
+      const res = await loginAPI(email, password);
+      const { token, user } = res; // ✅ user.username 읽힘
+
+      localStorage.setItem("token", token);
       setIsLoggedIn(true);
-      setCurrentUser(username);
+      setCurrentUser(user.username);
+      setIsAdmin(user.role === "admin");
       setIsAuthDialogOpen(false);
-      toast.success(`${username}님, 환영합니다!`);
+
+      toast.success(`${user.username}님, 환영합니다!`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "로그인 실패");
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // JWT 삭제
@@ -249,21 +218,23 @@ export default function App() {
     toast.success("댓글이 삭제되었습니다!");
   };
 
-  const handleStatusChange = (problemId: number, newStatus: "pending" | "in-progress" | "resolved") => {
-    setProblems(
-      problems.map((p) =>
-        p.id === problemId ? { ...p, status: newStatus } : p
-      )
-    );
-    
-    const statusLabels = {
-      pending: "대기중",
-      "in-progress": "처리중",
-      resolved: "해결완료",
-    };
-    
-    toast.success(`상태가 '${statusLabels[newStatus]}'로 변경되었습니다!`);
+  const handleStatusChange = async (
+    problemId: number,
+    newStatus: "pending" | "in-progress" | "resolved"
+  ) => {
+    try {
+      const res = await updateProblemStatusAPI(problemId, newStatus);
+      setProblems(
+        problems.map((p) =>
+          p.id === problemId ? { ...p, status: res.status } : p
+        )
+      );
+      toast.success(`상태가 '${res.status}'로 변경되었습니다!`);
+    } catch (err) {
+      toast.error("상태 변경 실패");
+    }
   };
+
 
   const selectedProblem = problems.find((p) => p.id === selectedProblemId);
 
@@ -325,7 +296,10 @@ export default function App() {
       <CreateProblemDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreateProblem}
+        onSubmit={() => {
+          // 새로 등록된 문제 다시 불러오기
+          // (또는 setProblems([...problems, newOne]) 로 수동 추가도 가능)
+        }}
       />
 
       <AuthDialog
