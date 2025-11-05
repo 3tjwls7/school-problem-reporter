@@ -2,6 +2,7 @@ import {
   checkUserVoted,
   addVote,
   removeVote,
+  getVoteCount, // 새로 추가할 함수
 } from "../repositories/vote.repository.js";
 
 export const toggleVoteService = async (userId, problemId) => {
@@ -9,9 +10,16 @@ export const toggleVoteService = async (userId, problemId) => {
 
   if (alreadyVoted) {
     await removeVote(userId, problemId);
-    return { message: "공감이 취소되었습니다.", voted: false };
   } else {
     await addVote(userId, problemId);
-    return { message: "공감되었습니다!", voted: true };
   }
+
+  // 최신 votes 수 조회
+  const votes = await getVoteCount(problemId);
+
+  return {
+    message: alreadyVoted ? "공감이 취소되었습니다." : "공감되었습니다!",
+    voted: !alreadyVoted,
+    votes, // 프론트에 최신 공감 수 전달
+  };
 };

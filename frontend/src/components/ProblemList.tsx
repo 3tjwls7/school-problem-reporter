@@ -33,11 +33,11 @@ export function ProblemList({ problems, onVote, onProblemClick }: ProblemListPro
     return p.status === filterBy;
   });
 
-  // ✅ 정렬
   const sortedProblems = [...filteredProblems].sort((a, b) => {
     if (sortBy === "votes") return b.votes - a.votes;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
 
   return (
     <div className="space-y-8">

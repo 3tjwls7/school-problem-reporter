@@ -8,56 +8,23 @@ import { Problem } from "./components/ProblemCard";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { loginAPI, signupAPI } from "./api/auth";
+import { toggleVoteAPI } from "./api/vote";
 import {
   getProblemsAPI,
   updateProblemStatusAPI,
 } from "./api/problem";
+import {
+  getCommentsAPI,
+  createCommentAPI,
+  deleteCommentAPI,
+} from "./api/comment";
 
 import api from "./api/axiosAuth";
 
 
-const mockComments: { [key: number]: Comment[] } = {
-  1: [
-    {
-      id: 1,
-      author: "홍길동",
-      content: "저도 이 문제 겪었어요. 빨리 수리되면 좋겠습니다.",
-      createdAt: "2024-11-01",
-    },
-    {
-      id: 2,
-      author: "김영희",
-      content: "어제부터 처리중이라고 공지가 올라왔어요!",
-      createdAt: "2024-11-02",
-    },
-  ],
-  2: [
-    {
-      id: 3,
-      author: "정민수",
-      content: "여기 의자들 정말 오래됐죠. 교체가 필요할 것 같아요.",
-      createdAt: "2024-10-31",
-    },
-  ],
-  3: [
-    {
-      id: 4,
-      author: "최수진",
-      content: "운동 동아리 활동할 때 너무 불편해요.",
-      createdAt: "2024-10-29",
-    },
-    {
-      id: 5,
-      author: "강태희",
-      content: "같은 문제 공감합니다!",
-      createdAt: "2024-10-30",
-    },
-  ],
-};
-
 export default function App() {
   const [problems, setProblems] = useState<Problem[]>([]);
-  const [comments, setComments] = useState<{ [key: number]: Comment[] }>(mockComments);
+  const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -94,7 +61,7 @@ export default function App() {
         .catch(() => localStorage.removeItem("token"));
     }
 
-    // ✅ 문제 목록 불러오기
+    // 문제 목록 불러오기
     getProblemsAPI()
       .then((data) => {
         setProblems(data);
@@ -102,33 +69,46 @@ export default function App() {
       .catch(() => toast.error("문제 목록을 불러오지 못했습니다."));
   }, []);
 
+  useEffect(() => {
+    if (selectedProblemId) {
+      getCommentsAPI(selectedProblemId)
+        .then((data) => {
+          // 내가 쓴 댓글이면 isOwn = true 설정
+          const processedComments = data.map((c: any) => ({
+            ...c,
+            isOwn: c.username === currentUser,
+          }));
+
+          setComments((prev) => ({
+            ...prev,
+            [selectedProblemId]: processedComments,
+          }));
+        })
+        .catch(() => toast.error("댓글 목록을 불러오지 못했습니다."));
+    }
+  }, [selectedProblemId, currentUser]);
 
 
-  const handleVote = (id: number) => {
-    setProblems(
-      problems.map((p) => {
-        if (p.id === id) {
-          return {
-            ...p,
-            votes: p.hasVoted ? p.votes - 1 : p.votes + 1,
-            hasVoted: !p.hasVoted,
-          };
-        }
-        return p;
-      })
-    );
-    toast.success(
-      problems.find((p) => p.id === id)?.hasVoted
-        ? "공감을 취소했습니다"
-        : "공감했습니다!"
-    );
+
+  const handleVote = async (id: number) => {
+    try {
+      const res = await toggleVoteAPI(id);
+      setProblems(
+        problems.map((p) =>
+          p.id === id ? { ...p, votes: res.votes, hasVoted: res.voted } : p
+        )
+      );
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "공감 처리 실패");
+    }
   };
   
   
   const handleLogin = async (email: string, password: string) => {
     try {
       const res = await loginAPI(email, password);
-      const { token, user } = res; // ✅ user.username 읽힘
+      const { token, user } = res; // user.username 읽힘
 
       localStorage.setItem("token", token);
       setIsLoggedIn(true);
@@ -167,56 +147,56 @@ export default function App() {
   };
 
 
-  const handleAddComment = (content: string) => {
+  const handleAddComment = async (content: string) => {
     if (!selectedProblemId) return;
 
-    const newComment: Comment = {
-      id: Date.now(),
-      author: currentUser,
-      content,
-      createdAt: new Date().toISOString().split("T")[0],
-      isOwn: true,
-    };
+    try {
+      const newComment = await createCommentAPI(selectedProblemId, content);
 
-    setComments({
-      ...comments,
-      [selectedProblemId]: [
-        ...(comments[selectedProblemId] || []),
-        newComment,
-      ],
-    });
+      // 내가 방금 쓴 댓글은 무조건 isOwn = true
+      setComments({
+        ...comments,
+        [selectedProblemId]: [
+          ...(comments[selectedProblemId] || []),
+          { ...newComment, isOwn: true },
+        ],
+      });
 
-    setProblems(
-      problems.map((p) =>
-        p.id === selectedProblemId
-          ? { ...p, commentCount: p.commentCount + 1 }
-          : p
-      )
-    );
-
-    toast.success("댓글이 작성되었습니다!");
+      toast.success("댓글이 작성되었습니다!");
+    } catch {
+      toast.error("댓글 작성을 실패했습니다.");
+    }
   };
 
-  const handleDeleteComment = (commentId: number) => {
+
+
+  const handleDeleteComment = async (commentId: number) => {
     if (!selectedProblemId) return;
 
-    setComments({
-      ...comments,
-      [selectedProblemId]: comments[selectedProblemId].filter(
-        (c) => c.id !== commentId
-      ),
-    });
+    try {
+      await deleteCommentAPI(selectedProblemId, commentId);
 
-    setProblems(
-      problems.map((p) =>
-        p.id === selectedProblemId
-          ? { ...p, commentCount: p.commentCount - 1 }
-          : p
-      )
-    );
+      setComments({
+        ...comments,
+        [selectedProblemId]: comments[selectedProblemId].filter(
+          (c) => c.id !== commentId
+        ),
+      });
 
-    toast.success("댓글이 삭제되었습니다!");
+      setProblems(
+        problems.map((p) =>
+          p.id === selectedProblemId
+            ? { ...p, commentCount: p.commentCount - 1 }
+            : p
+        )
+      );
+
+      toast.success("댓글이 삭제되었습니다!");
+    } catch {
+      toast.error("댓글 삭제를 실패했습니다.");
+    }
   };
+
 
   const handleStatusChange = async (
     problemId: number,

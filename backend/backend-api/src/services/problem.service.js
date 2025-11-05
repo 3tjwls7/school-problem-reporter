@@ -3,10 +3,27 @@ import {
   createProblem,
   updateProblemStatus,
 } from "../repositories/problem.repository.js";
+import db from "../../../db.js";
 
-export const getProblemsService = async () => {
-  return await getAllProblems();
+export const getProblemsService = async (userId = null) => {
+  const problems = await getAllProblems();
+
+  if (!userId) {
+    return problems.map((p) => ({ ...p, hasVoted: false }));
+  }
+
+  const [votedRows] = await db.execute(
+    "SELECT problemId FROM votes WHERE userId = ?",
+    [userId]
+  );
+  const votedIds = votedRows.map((v) => v.problemId);
+
+  return problems.map((p) => ({
+    ...p,
+    hasVoted: votedIds.includes(p.id),
+  }));
 };
+
 
 export const createProblemService = async ({
   title,
@@ -29,5 +46,5 @@ export const changeProblemStatusService = async (id, status, userRole) => {
   }
 
   await updateProblemStatus(id, status);
-  return { message: "문제 상태가 변경되었습니다." };
+  return { status, message: "문제 상태가 변경되었습니다." }; 
 };

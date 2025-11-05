@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ThumbsUp, MessageCircle, MapPin, Calendar } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { formatKoreanTime } from "../utils/dateFormat";
 
 export interface Problem {
   id: number;
@@ -13,7 +14,7 @@ export interface Problem {
   votes: number;
   commentCount: number;
   createdAt: string;
-  author: string;
+  username?: string;
   hasVoted?: boolean;
   status?: "pending" | "in-progress" | "resolved";
 }
@@ -80,7 +81,7 @@ export function ProblemCard({ problem, onVote, onClick }: ProblemCardProps) {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary">
               <Calendar className="h-3.5 w-3.5" />
             </div>
-            <span>{problem.createdAt}</span>
+            <span>{formatKoreanTime(problem.createdAt)}</span>
           </div>
         </div>
       </CardContent>

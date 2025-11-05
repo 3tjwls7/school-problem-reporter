@@ -1,5 +1,8 @@
 import { verifyJWT } from "../../../backend-auth/src/utils/jwt.js";
+import dotenv from "dotenv";
+import path from "path";
 
+dotenv.config({ path: path.resolve("../.env") });
 
 export const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;

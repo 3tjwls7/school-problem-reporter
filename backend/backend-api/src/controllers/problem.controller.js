@@ -4,9 +4,22 @@ import {
   changeProblemStatusService,
 } from "../services/problem.service.js";
 
+import { verifyJWT } from "../../../backend-auth/src/utils/jwt.js";
+
 export const getProblems = async (req, res) => {
   try {
-    const problems = await getProblemsService();
+    let userId = null;
+
+    // 토큰이 있으면 사용자 식별
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.split(" ")[1];
+      const decoded = verifyJWT(token);
+      if (decoded) userId = decoded.id;
+    }
+
+    // 서비스 계층에 userId 전달
+    const problems = await getProblemsService(userId);
     res.json(problems);
   } catch (err) {
     res.status(500).json({ message: err.message });

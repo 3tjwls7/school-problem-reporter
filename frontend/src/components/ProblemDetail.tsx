@@ -5,6 +5,7 @@ import { Badge } from "./ui/badge";
 import { Textarea } from "./ui/textarea";
 import { Separator } from "./ui/separator";
 import { Label } from "./ui/label";
+import { formatKoreanTime } from "../utils/dateFormat";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 export interface Comment {
   id: number;
-  author: string;
+  username: string;
   content: string;
   createdAt: string;
   isOwn?: boolean;
@@ -41,7 +42,10 @@ interface ProblemDetailProps {
   onBack: () => void;
   onAddComment: (content: string) => void;
   onDeleteComment: (commentId: number) => void;
-  onStatusChange: (problemId: number, newStatus: "pending" | "in-progress" | "resolved") => void;
+  onStatusChange: (
+    problemId: number,
+    newStatus: "pending" | "in-progress" | "resolved"
+  ) => void;
 }
 
 export function ProblemDetail({
@@ -58,9 +62,12 @@ export function ProblemDetail({
   const [commentText, setCommentText] = useState("");
 
   const statusColors = {
-    pending: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
-    "in-progress": "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900",
-    resolved: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
+    pending:
+      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
+    "in-progress":
+      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900",
+    resolved:
+      "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
   };
 
   const statusLabels = {
@@ -112,7 +119,10 @@ export function ProblemDetail({
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{problem.author}</span>
+              {/* ✅ 문제 작성자 username */}
+              <span className="text-sm font-semibold text-primary">
+                {problem.username}
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
               <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -120,14 +130,16 @@ export function ProblemDetail({
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{problem.createdAt}</span>
+              <span className="text-sm">{formatKoreanTime(problem.createdAt)}</span>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        <p className="whitespace-pre-wrap leading-relaxed">{problem.description}</p>
+        <p className="whitespace-pre-wrap leading-relaxed">
+          {problem.description}
+        </p>
 
         <div className="flex flex-wrap items-center gap-4 pt-2">
           <Button
@@ -151,13 +163,15 @@ export function ProblemDetail({
             </div>
             <div>
               <h3 className="text-lg">관리자 전용</h3>
-              <p className="text-sm text-muted-foreground">문제 처리 상태를 변경할 수 있습니다</p>
+              <p className="text-sm text-muted-foreground">
+                문제 처리 상태를 변경할 수 있습니다
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Label className="text-sm">처리 상태:</Label>
             <Select
-              value={problem.status}
+              value={problem.status ?? "pending"} 
               onValueChange={(value: "pending" | "in-progress" | "resolved") =>
                 onStatusChange(problem.id, value)
               }
@@ -166,9 +180,11 @@ export function ProblemDetail({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">대기중</SelectItem>
-                <SelectItem value="in-progress">처리중</SelectItem>
-                <SelectItem value="resolved">해결완료</SelectItem>
+                {Object.entries(statusLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -214,12 +230,23 @@ export function ProblemDetail({
             </div>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} className="space-y-2 rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+              <div
+                key={comment.id || `${comment.username}-${comment.createdAt}`}
+                className={`space-y-2 rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${
+                  comment.isOwn ? "border-primary/30 bg-primary/5" : ""
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{comment.author}</span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        comment.isOwn ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      {comment.username}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {comment.createdAt}
+                      {formatKoreanTime(comment.createdAt)}
                     </span>
                   </div>
                   {comment.isOwn && (

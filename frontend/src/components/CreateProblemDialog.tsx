@@ -87,6 +87,7 @@ export function CreateProblemDialog({
       alert("문제가 신고되었습니다!");
       onOpenChange(false);
       onSubmit();
+      
 
       // 입력 초기화
       setTitle("");

@@ -28,3 +28,11 @@ export const removeVote = async (userId, problemId) => {
     problemId,
   ]);
 };
+
+export const getVoteCount = async (problemId) => {
+  const [rows] = await db.execute(
+    "SELECT votes FROM problems WHERE id = ?",
+    [problemId]
+  );
+  return rows.length > 0 ? rows[0].votes : 0;
+};
