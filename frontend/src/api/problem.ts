@@ -1,4 +1,4 @@
-import api from "./axiosAPI"; // baseURL: http://localhost:4002
+import api from "./axiosAPI"; 
 
 // 모든 문제 목록 조회
 export const getProblemsAPI = async () => {
@@ -40,5 +40,10 @@ export const updateProblemAPI = async (
 // 문제 삭제
 export const deleteProblemAPI = async (id: number) => {
   const res = await api.delete(`/problems/${id}`);
+  return res.data;
+};
+
+export const getMyProblemsAPI = async () => {
+  const res = await api.get("/problems/my");
   return res.data;
 };

@@ -11,6 +11,7 @@ import { loginAPI, signupAPI } from "./api/auth";
 import { toggleVoteAPI } from "./api/vote";
 import { ProblemCard } from "./components/ProblemCard";
 import { EditProblemDialog } from "./components/EditProblemDialog";
+import { MyPage } from "./components/MyPage";
 
 import {
   getProblemsAPI,
@@ -38,6 +39,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
+  const [isMyPageOpen, setIsMyPageOpen] = useState(false); // 마이페이지 상태 추가
 
   // 문제 목록 새로고침
   const handleProblemUpdated = async () => {
@@ -49,7 +51,7 @@ export default function App() {
     }
   };
 
-  // 문제 삭제 (삭제 확인창 포함)
+  // 문제 삭제
   const handleDeleteProblem = async (id: number) => {
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
 
@@ -69,6 +71,7 @@ export default function App() {
     setIsEditDialogOpen(true);
   };
 
+  // 문제 수정
   const handleSubmitEdit = async (updatedData: {
     title: string;
     description: string;
@@ -84,40 +87,31 @@ export default function App() {
       formData.append("location", updatedData.location);
       if (updatedData.image) formData.append("image", updatedData.image);
 
-      // 서버 응답 결과 받기
       const updated = await updateProblemAPI(editingProblem.id, formData);
 
       toast.success("문제가 수정되었습니다!");
 
-      // problems 상태 즉시 반영
       setProblems((prev) =>
         prev.map((p) =>
           p.id === editingProblem.id
             ? {
                 ...p,
-                ...updated, // 서버가 반환한 새 데이터 반영
-                // 캐시 무효화 (같은 파일명일 경우 대비)
-                imageUrl: `${updated.imageUrl}?t=${Date.now()}`,
+                ...updated,
+                imageUrl: `${updated.imageUrl}?t=${Date.now()}`, // 캐시 무효화
               }
             : p
         )
       );
 
-      // 다이얼로그 닫기 + 목록 화면으로 이동
       setIsEditDialogOpen(false);
       setSelectedProblemId(null);
 
-      // 살짝 지연 후 전체 목록 새로고침
       setTimeout(() => handleProblemUpdated(), 300);
     } catch (err) {
       console.error(err);
       toast.error("문제 수정 중 오류가 발생했습니다.");
     }
   };
-
-
-
-
 
   // 로그인 상태 확인 + 문제 목록 불러오기
   useEffect(() => {
@@ -194,9 +188,9 @@ export default function App() {
     setIsLoggedIn(false);
     setCurrentUser("");
     setIsAdmin(false);
+    setIsMyPageOpen(false); // ✅ 로그아웃 시 마이페이지 닫기
     toast.success("로그아웃되었습니다.");
 
-    // 페이지 전체 새로고침 (1회)
     setTimeout(() => {
       window.location.reload();
     }, 500);
@@ -273,7 +267,7 @@ export default function App() {
         )
       );
       toast.success(`상태가 '${res.status}'로 변경되었습니다!`);
-    } catch (err) {
+    } catch {
       toast.error("상태 변경 실패");
     }
   };
@@ -293,12 +287,15 @@ export default function App() {
         }}
         onLoginClick={() => setIsAuthDialogOpen(true)}
         onLogoutClick={handleLogout}
+        onMyPageClick={() => setIsMyPageOpen(true)} // 마이페이지 열기
         isLoggedIn={isLoggedIn}
         username={currentUser}
       />
 
       <main className="container px-4 py-8 md:py-12">
-        {selectedProblem ? (
+        {isMyPageOpen ? (
+          <MyPage onBack={() => setIsMyPageOpen(false)} />
+        ) : selectedProblem ? (
           <ProblemDetail
             problem={selectedProblem}
             comments={comments[selectedProblem.id] || []}
@@ -312,7 +309,7 @@ export default function App() {
             onEditProblem={handleEditProblem}
             onDeleteProblem={handleDeleteProblem}
           />
-        ) : (
+        ) :  (
           <div className="space-y-8">
             <div className="rounded-2xl border bg-card p-6 shadow-sm md:p-8">
               <div className="flex items-start gap-4">
@@ -384,10 +381,9 @@ export default function App() {
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           problem={editingProblem}
-          onSubmit={handleSubmitEdit} 
+          onSubmit={handleSubmitEdit}
         />
       )}
-
 
       {/* 로그인 / 회원가입 다이얼로그 */}
       <AuthDialog

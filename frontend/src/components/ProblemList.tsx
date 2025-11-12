@@ -116,16 +116,18 @@ export function ProblemList({
           </div>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {sortedProblems.map((problem) => (
-            <ProblemCard
-              key={problem.id}
-              problem={problem}
-              onVote={onVote}
-              onClick={onProblemClick}
-            />
-          ))}
-        </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-start">
+            {sortedProblems.map((problem) => (
+              <div key={problem.id} className="h-full">
+                <ProblemCard
+                  problem={problem}
+                  onVote={onVote}
+                  onClick={onProblemClick}
+                />
+              </div>
+            ))}
+          </div>
+
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import {
   changeProblemStatusService,
   deleteProblemService,
   updateProblemService,
+  getMyProblemsService,
 } from "../services/problem.service.js";
 import { verifyJWT } from "../../../backend-auth/src/utils/jwt.js";
 
@@ -106,5 +107,16 @@ export const updateProblem = async (req, res) => {
     res.json(updated); // 수정된 문제 데이터 전체 반환
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+export const getMyProblems = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const problems = await getMyProblemsService(userId);
+    res.json(problems);
+  } catch (err) {
+    console.error("❌ 내 신고글 불러오기 실패:", err);
+    res.status(500).json({ message: "내 신고글을 불러오지 못했습니다." });
   }
 };

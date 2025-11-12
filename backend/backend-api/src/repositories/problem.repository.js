@@ -80,3 +80,11 @@ export const updateProblem = async (
     }
   }
 };
+
+export const getMyProblemsRepo = async (userId) => {
+  const [rows] = await db.query(
+    "SELECT * FROM problems WHERE authorId = ? ORDER BY createdAt DESC",
+    [userId]
+  );
+  return rows;
+};

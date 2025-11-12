@@ -6,7 +6,9 @@ import {
   updateProblemStatus,
   deleteProblem,
   updateProblem,
+  getMyProblemsRepo
 } from "../repositories/problem.repository.js";
+
 
 /**
  * 문제 목록 조회 서비스
@@ -107,4 +109,8 @@ export const updateProblemService = async (
     [id]
   );
   return rows[0];
+};
+
+export const getMyProblemsService = async (userId) => {
+  return await getMyProblemsRepo(userId);
 };
