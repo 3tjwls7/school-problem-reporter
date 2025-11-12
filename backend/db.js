@@ -9,6 +9,8 @@ const db = await mysql.createConnection({
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASS || "123456",
   database: process.env.DB_NAME || "school_report",
+  connectionLimit: 10, // 동시에 최대 연결 수
+  queueLimit: 0,
 });
 
 console.log("✅ MySQL connected successfully!");

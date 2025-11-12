@@ -111,10 +111,10 @@ export function AuthDialog({
           <TabsContent value="signup" className="mt-6">
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-username">이메일</Label>
+                <Label htmlFor="signup-username">아이디</Label>
                 <Input
                   id="signup-username"
-                  placeholder="이메일을 입력하세요"
+                  placeholder="아이디를 입력하세요"
                   value={signupUsername}
                   onChange={(e) => setSignupUsername(e.target.value)}
                   className="border-2"

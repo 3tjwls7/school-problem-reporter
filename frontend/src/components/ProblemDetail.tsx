@@ -6,6 +6,7 @@ import { Textarea } from "./ui/textarea";
 import { Separator } from "./ui/separator";
 import { Label } from "./ui/label";
 import { formatKoreanTime } from "../utils/dateFormat";
+import { EditProblemDialog } from "./EditProblemDialog";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,8 @@ interface ProblemDetailProps {
     problemId: number,
     newStatus: "pending" | "in-progress" | "resolved"
   ) => void;
+  onEditProblem: (id: number, problem: Problem) => void;
+  onDeleteProblem: (id: number) => void;
 }
 
 export function ProblemDetail({
@@ -58,6 +61,8 @@ export function ProblemDetail({
   onAddComment,
   onDeleteComment,
   onStatusChange,
+  onEditProblem,
+  onDeleteProblem,
 }: ProblemDetailProps) {
   const [commentText, setCommentText] = useState("");
 
@@ -83,15 +88,23 @@ export function ProblemDetail({
     }
   };
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
+
+  const handleEditClick = (problem: Problem) => {
+    setEditingProblem(problem);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      {/* Back Button */}
+      {/* 뒤로가기 */}
       <Button variant="outline" onClick={onBack} className="gap-2 shadow-sm">
         <ArrowLeft className="h-4 w-4" />
         목록으로
       </Button>
 
-      {/* Problem Image */}
+      {/* 문제 이미지 */}
       <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 shadow-lg">
         <ImageWithFallback
           src={
@@ -112,14 +125,13 @@ export function ProblemDetail({
         )}
       </div>
 
-      {/* Problem Info */}
+      {/* 문제 정보 */}
       <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
         <div>
           <h1>{problem.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
               <User className="h-4 w-4 text-muted-foreground" />
-              {/* ✅ 문제 작성자 username */}
               <span className="text-sm font-semibold text-primary">
                 {problem.username}
               </span>
@@ -141,6 +153,7 @@ export function ProblemDetail({
           {problem.description}
         </p>
 
+        {/* 공감 / 수정 / 삭제 */}
         <div className="flex flex-wrap items-center gap-4 pt-2">
           <Button
             variant={problem.hasVoted ? "default" : "outline"}
@@ -151,10 +164,33 @@ export function ProblemDetail({
             <ThumbsUp className="h-5 w-5" />
             공감하기 ({problem.votes})
           </Button>
+
+          {(problem.username === currentUser || isAdmin) && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 text-blue-600 border-blue-300 hover:bg-blue-50"
+                size="lg"
+                onClick={() => handleEditClick(problem)}
+              >
+                ✏️ 수정
+              </Button>
+
+
+              <Button
+                variant="outline"
+                className="gap-2 text-red-600 border-red-300 hover:bg-red-50"
+                size="lg"
+                onClick={() => onDeleteProblem(problem.id)}
+              >
+                🗑️ 삭제
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Admin Status Control */}
+      {/* 관리자 상태 변경 */}
       {isAdmin && (
         <div className="space-y-4 rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 shadow-sm">
           <div className="flex items-center gap-3">
@@ -171,7 +207,7 @@ export function ProblemDetail({
           <div className="flex items-center gap-3">
             <Label className="text-sm">처리 상태:</Label>
             <Select
-              value={problem.status ?? "pending"} 
+              value={problem.status ?? "pending"}
               onValueChange={(value: "pending" | "in-progress" | "resolved") =>
                 onStatusChange(problem.id, value)
               }
@@ -191,7 +227,7 @@ export function ProblemDetail({
         </div>
       )}
 
-      {/* Comments Section */}
+      {/* 댓글 섹션 */}
       <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -200,7 +236,7 @@ export function ProblemDetail({
           <h2>댓글 ({comments.length})</h2>
         </div>
 
-        {/* Add Comment */}
+        {/* 댓글 작성 */}
         <div className="space-y-3 rounded-xl border bg-secondary/30 p-4">
           <Textarea
             placeholder="댓글을 입력하세요..."
@@ -217,7 +253,7 @@ export function ProblemDetail({
           </div>
         </div>
 
-        {/* Comments List */}
+        {/* 댓글 목록 */}
         <div className="space-y-3">
           {comments.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed bg-secondary/30 p-12 text-center">
@@ -266,6 +302,19 @@ export function ProblemDetail({
           )}
         </div>
       </div>
+      {editingProblem && (
+        <EditProblemDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          problem={editingProblem}
+          onSubmit={(updatedData) => {
+            // App.tsx의 handleEditProblem()에서 수정 API 호출을 처리
+            onEditProblem(editingProblem.id, { ...editingProblem, ...updatedData });
+          }}
+        />
+      )}
+
+
     </div>
   );
 }

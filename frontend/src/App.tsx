@@ -9,10 +9,16 @@ import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { loginAPI, signupAPI } from "./api/auth";
 import { toggleVoteAPI } from "./api/vote";
+import { ProblemCard } from "./components/ProblemCard";
+import { EditProblemDialog } from "./components/EditProblemDialog";
+
 import {
   getProblemsAPI,
+  updateProblemAPI,
+  deleteProblemAPI,
   updateProblemStatusAPI,
 } from "./api/problem";
+
 import {
   getCommentsAPI,
   createCommentAPI,
@@ -20,7 +26,6 @@ import {
 } from "./api/comment";
 
 import api from "./api/axiosAuth";
-
 
 export default function App() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -31,23 +36,90 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      api
-        .get("/auth/verify")
-        .then((res) => {
-          setIsLoggedIn(true);
-          setCurrentUser(res.data.user.email);
-          setIsAdmin(res.data.user.role === "admin");
-        })
-        .catch(() => {
-          localStorage.removeItem("token");
-        });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
+
+  // 문제 목록 새로고침
+  const handleProblemUpdated = async () => {
+    try {
+      const data = await getProblemsAPI();
+      setProblems(data);
+    } catch {
+      toast.error("문제 목록을 새로고침하지 못했습니다.");
     }
-  }, []);
+  };
+
+  // 문제 삭제 (삭제 확인창 포함)
+  const handleDeleteProblem = async (id: number) => {
+    if (!window.confirm("정말로 삭제하시겠습니까?")) return;
+
+    try {
+      const res = await deleteProblemAPI(id);
+      setProblems(problems.filter((p) => p.id !== id));
+      toast.success(res.message || "문제가 삭제되었습니다!");
+      setSelectedProblemId(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "삭제 실패");
+    }
+  };
+
+  // 수정 다이얼로그 열기
+  const handleEditProblem = (id: number, problem: Problem) => {
+    setEditingProblem(problem);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSubmitEdit = async (updatedData: {
+    title: string;
+    description: string;
+    location: string;
+    image?: File | null;
+  }) => {
+    if (!editingProblem) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("title", updatedData.title);
+      formData.append("description", updatedData.description);
+      formData.append("location", updatedData.location);
+      if (updatedData.image) formData.append("image", updatedData.image);
+
+      // 서버 응답 결과 받기
+      const updated = await updateProblemAPI(editingProblem.id, formData);
+
+      toast.success("문제가 수정되었습니다!");
+
+      // problems 상태 즉시 반영
+      setProblems((prev) =>
+        prev.map((p) =>
+          p.id === editingProblem.id
+            ? {
+                ...p,
+                ...updated, // 서버가 반환한 새 데이터 반영
+                // 캐시 무효화 (같은 파일명일 경우 대비)
+                imageUrl: `${updated.imageUrl}?t=${Date.now()}`,
+              }
+            : p
+        )
+      );
+
+      // 다이얼로그 닫기 + 목록 화면으로 이동
+      setIsEditDialogOpen(false);
+      setSelectedProblemId(null);
+
+      // 살짝 지연 후 전체 목록 새로고침
+      setTimeout(() => handleProblemUpdated(), 300);
+    } catch (err) {
+      console.error(err);
+      toast.error("문제 수정 중 오류가 발생했습니다.");
+    }
+  };
 
 
+
+
+
+  // 로그인 상태 확인 + 문제 목록 불러오기
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -61,35 +133,31 @@ export default function App() {
         .catch(() => localStorage.removeItem("token"));
     }
 
-    // 문제 목록 불러오기
     getProblemsAPI()
-      .then((data) => {
-        setProblems(data);
-      })
+      .then(setProblems)
       .catch(() => toast.error("문제 목록을 불러오지 못했습니다."));
   }, []);
 
+  // 댓글 목록 불러오기
   useEffect(() => {
     if (selectedProblemId) {
       getCommentsAPI(selectedProblemId)
         .then((data) => {
-          // 내가 쓴 댓글이면 isOwn = true 설정
-          const processedComments = data.map((c: any) => ({
+          const processed = data.map((c: any) => ({
             ...c,
             isOwn: c.username === currentUser,
           }));
 
           setComments((prev) => ({
             ...prev,
-            [selectedProblemId]: processedComments,
+            [selectedProblemId]: processed,
           }));
         })
         .catch(() => toast.error("댓글 목록을 불러오지 못했습니다."));
     }
   }, [selectedProblemId, currentUser]);
 
-
-
+  // 공감하기
   const handleVote = async (id: number) => {
     try {
       const res = await toggleVoteAPI(id);
@@ -103,34 +171,38 @@ export default function App() {
       toast.error(err.response?.data?.message || "공감 처리 실패");
     }
   };
-  
-  
+
+  // 로그인
   const handleLogin = async (email: string, password: string) => {
     try {
       const res = await loginAPI(email, password);
-      const { token, user } = res; // user.username 읽힘
-
+      const { token, user } = res;
       localStorage.setItem("token", token);
       setIsLoggedIn(true);
       setCurrentUser(user.username);
       setIsAdmin(user.role === "admin");
       setIsAuthDialogOpen(false);
-
       toast.success(`${user.username}님, 환영합니다!`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "로그인 실패");
     }
   };
 
-
+  // 로그아웃
   const handleLogout = () => {
-    localStorage.removeItem("token"); // JWT 삭제
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
     setCurrentUser("");
     setIsAdmin(false);
     toast.success("로그아웃되었습니다.");
+
+    // 페이지 전체 새로고침 (1회)
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
+  // 회원가입
   const handleSignup = async (
     username: string,
     email: string,
@@ -146,14 +218,11 @@ export default function App() {
     }
   };
 
-
+  // 댓글 작성
   const handleAddComment = async (content: string) => {
     if (!selectedProblemId) return;
-
     try {
       const newComment = await createCommentAPI(selectedProblemId, content);
-
-      // 내가 방금 쓴 댓글은 무조건 isOwn = true
       setComments({
         ...comments,
         [selectedProblemId]: [
@@ -161,28 +230,23 @@ export default function App() {
           { ...newComment, isOwn: true },
         ],
       });
-
       toast.success("댓글이 작성되었습니다!");
     } catch {
       toast.error("댓글 작성을 실패했습니다.");
     }
   };
 
-
-
+  // 댓글 삭제
   const handleDeleteComment = async (commentId: number) => {
     if (!selectedProblemId) return;
-
     try {
       await deleteCommentAPI(selectedProblemId, commentId);
-
       setComments({
         ...comments,
         [selectedProblemId]: comments[selectedProblemId].filter(
           (c) => c.id !== commentId
         ),
       });
-
       setProblems(
         problems.map((p) =>
           p.id === selectedProblemId
@@ -190,14 +254,13 @@ export default function App() {
             : p
         )
       );
-
       toast.success("댓글이 삭제되었습니다!");
     } catch {
       toast.error("댓글 삭제를 실패했습니다.");
     }
   };
 
-
+  // 상태 변경 (관리자)
   const handleStatusChange = async (
     problemId: number,
     newStatus: "pending" | "in-progress" | "resolved"
@@ -214,7 +277,6 @@ export default function App() {
       toast.error("상태 변경 실패");
     }
   };
-
 
   const selectedProblem = problems.find((p) => p.id === selectedProblemId);
 
@@ -247,6 +309,8 @@ export default function App() {
             onAddComment={handleAddComment}
             onDeleteComment={handleDeleteComment}
             onStatusChange={handleStatusChange}
+            onEditProblem={handleEditProblem}
+            onDeleteProblem={handleDeleteProblem}
           />
         ) : (
           <div className="space-y-8">
@@ -264,6 +328,41 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {problems.some((p) => p.isOverdue) && (
+              <div className="rounded-xl border-2 border-red-300 bg-red-50 p-5 space-y-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🚨</span>
+                  <div>
+                    <p className="font-semibold text-red-700">
+                      아직 해결되지 않은 문제가 있어요!
+                    </p>
+                    <p className="text-sm text-red-600">
+                      일주일 이상 경과한 문제는 빠른 시일 내에 처리될 수 있도록 확인해주세요.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4 max-h-[280px] overflow-y-auto pr-1">
+                  {problems
+                    .filter((p) => p.isOverdue)
+                    .map((problem) => (
+                      <div
+                        key={problem.id}
+                        className="scale-[0.9] transform"
+                        style={{ minHeight: "180px" }}
+                      >
+                        <ProblemCard
+                          problem={problem}
+                          onVote={handleVote}
+                          onClick={setSelectedProblemId}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             <ProblemList
               problems={problems}
               onVote={handleVote}
@@ -273,15 +372,24 @@ export default function App() {
         )}
       </main>
 
+      {/* 신고 다이얼로그 */}
       <CreateProblemDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onSubmit={() => {
-          // 새로 등록된 문제 다시 불러오기
-          // (또는 setProblems([...problems, newOne]) 로 수동 추가도 가능)
-        }}
+        onSubmit={handleProblemUpdated}
       />
 
+      {editingProblem && (
+        <EditProblemDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          problem={editingProblem}
+          onSubmit={handleSubmitEdit} 
+        />
+      )}
+
+
+      {/* 로그인 / 회원가입 다이얼로그 */}
       <AuthDialog
         open={isAuthDialogOpen}
         onOpenChange={setIsAuthDialogOpen}

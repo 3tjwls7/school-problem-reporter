@@ -22,3 +22,23 @@ export const updateProblemStatusAPI = async (
   const res = await api.patch(`/problems/${id}/status`, { status: newStatus });
   return res.data;
 };
+
+// 문제 수정
+export const updateProblemAPI = async (
+  id: number,
+  data: FormData | { title: string; description: string; location: string; image?: File | null }
+) => {
+  const headers =
+    data instanceof FormData
+      ? { "Content-Type": "multipart/form-data" }
+      : { "Content-Type": "application/json" };
+
+  const res = await api.patch(`/problems/${id}`, data, { headers });
+  return res.data;
+};
+
+// 문제 삭제
+export const deleteProblemAPI = async (id: number) => {
+  const res = await api.delete(`/problems/${id}`);
+  return res.data;
+};
