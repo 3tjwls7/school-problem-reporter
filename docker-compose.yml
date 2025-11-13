@@ -1,0 +1,124 @@
+version: "3.9"
+
+services:
+  # ? NGINX Reverse Proxy (443 / 80)
+  myproxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: myproxy
+    ports:
+      - "443:443"
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - school-net
+    depends_on:
+      - frontend
+
+  # ? FRONTEND (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - school-net
+    depends_on:
+      - backend-api
+      - backend-auth
+
+  # ? BACKEND-API (문제/댓글/투표 API)
+  backend-api:
+    build:
+      context: ./backend/backend-api
+      dockerfile: Dockerfile
+    container_name: backend-api
+    environment:
+      - API_PORT=4002
+      - DB_HOST=school-mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASS=123456
+      - DB_NAME=school_report
+      - REDIS_HOST=school-redis
+      - REDIS_PORT=6379
+    ports:
+      - "4002:4002"
+    restart: unless-stopped
+    networks:
+      - school-net
+    depends_on:
+      - school-mysql
+      - school-redis
+
+  # ? BACKEND-AUTH (회원가입/로그인/JWT)
+  backend-auth:
+    build:
+      context: ./backend/backend-auth
+      dockerfile: Dockerfile
+    container_name: backend-auth
+    environment:
+      - AUTH_PORT=4001
+      - DB_HOST=school-mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASS=123456
+      - DB_NAME=school_report
+      - JWT_SECRET=supersecretkey
+      - JWT_EXPIRES=1h
+      - REDIS_HOST=school-redis
+      - REDIS_PORT=6379
+    ports:
+      - "4001:4001"
+    restart: unless-stopped
+    networks:
+      - school-net
+    depends_on:
+      - school-mysql
+      - school-redis
+
+  # ? MYSQL
+  school-mysql:
+    image: mysql:8
+    container_name: school-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "school_report"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - school-net
+
+  # ? REDIS
+  school-redis:
+    image: redis:alpine
+    container_name: school-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - school-net
+
+  # ? Redis Insight (관리용)
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "8090:8001"
+    restart: unless-stopped
+    networks:
+      - school-net
+
+networks:
+  school-net:
+
+volumes:
+  mysql-data:
+  redis-data:

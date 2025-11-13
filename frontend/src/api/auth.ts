@@ -1,6 +1,7 @@
-import api from "./axiosAuth";
+// src/api/auth.ts
+import axiosAuth from "./axiosAuth";
 
-// 회원가입 요청
+// 회원가입
 export const signupAPI = async (
   username: string,
   email: string,
@@ -8,7 +9,7 @@ export const signupAPI = async (
   isAdmin: boolean
 ) => {
   const role = isAdmin ? "admin" : "user";
-  const res = await api.post("/auth/signup", {
+  const res = await axiosAuth.post("/auth/signup", {
     username,
     email,
     password,
@@ -17,13 +18,15 @@ export const signupAPI = async (
   return res.data;
 };
 
-// 로그인 요청
+// 로그인
 export const loginAPI = async (emailOrUsername: string, password: string) => {
-  // 백엔드가 이메일 기반 로그인이라면 email로 보내면 됨
-  const res = await api.post("/auth/login", {
+  const res = await axiosAuth.post("/auth/login", {
     email: emailOrUsername,
     password,
   });
+
+  const token = res.data.accessToken;
+  localStorage.setItem("token", token);
+
   return res.data;
 };
-

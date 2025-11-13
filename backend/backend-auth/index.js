@@ -6,7 +6,13 @@ import authRoutes from "./src/routes/authRoutes.js";
 dotenv.config({ path: "../.env" });
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "DELETE", "PATCH"]
+}));
+
 app.use(express.json());
 
 app.use("/auth", authRoutes);

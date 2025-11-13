@@ -7,6 +7,7 @@ WORKDIR /app
 # 상위의 공통 package.json 복사 및 의존성 설치
 COPY package*.json ./
 RUN npm install
+RUN npm install ioredis
 
 # backend-auth 코드 복사
 COPY backend-auth ./backend-auth

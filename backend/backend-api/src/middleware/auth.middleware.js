@@ -1,23 +1,43 @@
 // backend-api/src/middleware/auth.middleware.js
 import axios from "axios";
+import redis from "../../redis.js";
 
 export const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  if (!authHeader)
     return res.status(401).json({ message: "토큰이 없습니다." });
-  }
+
+  const token = authHeader.split(" ")[1];
 
   try {
-    // backend-auth 서버의 /auth/verify 엔드포인트로 요청
+    // 1) auth 서버로 토큰 검증
     const response = await axios.get("http://backend-auth:4001/auth/verify", {
-      headers: { Authorization: authHeader },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
-    req.user = response.data.user; // ✅ 유저 정보 저장
+    const user = response.data.user; // { id, username, email, role }
+
+    // 2) Redis 세션 있는지 확인
+    const session = await redis.get(`session:${user.id}`);
+
+    if (session) {
+      req.user = JSON.parse(session);
+      return next();
+    }
+
+    // 3) 없으면 세션 저장 (2시간)
+    await redis.set(
+      `session:${user.id}`,
+      JSON.stringify(user),
+      "EX",
+      3600 * 2
+    );
+
+    req.user = user;
     next();
-  } catch (error) {
+  } catch (err) {
     return res.status(403).json({
-      message: error.response?.data?.message || "유효하지 않은 토큰입니다.",
+      message: "유효하지 않은 토큰입니다.",
     });
   }
 };
