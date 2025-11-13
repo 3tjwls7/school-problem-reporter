@@ -1,4 +1,4 @@
-import db from "../../../db.js";
+import db from "../../db.js";
 
 // 유저 조회
 export const findUserByEmail = async (email) => {

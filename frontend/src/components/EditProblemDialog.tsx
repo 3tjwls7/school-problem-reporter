@@ -21,6 +21,7 @@ import {
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
+
 interface EditProblemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -82,7 +83,7 @@ export function EditProblemDialog({
         problem.imageUrl
           ? problem.imageUrl.startsWith("http")
             ? problem.imageUrl
-            : `http://localhost:4002${problem.imageUrl}`
+            : `${problem.imageUrl}`
           : ""
       );
       setFile(null);

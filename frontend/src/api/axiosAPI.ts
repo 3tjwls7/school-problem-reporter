@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:4002", // 메인 API 서버
+  baseURL: process.env.REACT_APP_API_BASE_URL // 메인 API 서버
 });
 
 // JWT 자동 헤더 추가

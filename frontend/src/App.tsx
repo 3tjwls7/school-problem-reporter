@@ -28,6 +28,9 @@ import {
 
 import api from "./api/axiosAuth";
 
+
+console.log(process.env.REACT_APP_API_BASE_URL);
+
 export default function App() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [comments, setComments] = useState<Record<number, Comment[]>>({});

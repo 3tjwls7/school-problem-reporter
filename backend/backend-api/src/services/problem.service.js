@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import db from "../../../db.js";
+import db from "../../db.js";
 import {
   getAllProblems,
   createProblem,

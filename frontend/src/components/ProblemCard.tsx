@@ -52,7 +52,7 @@ export function ProblemCard({ problem, onVote, onClick }: ProblemCardProps) {
           src={
             problem.imageUrl.startsWith("http")
               ? problem.imageUrl
-              : `http://localhost:4002${problem.imageUrl}`
+              : `${problem.imageUrl}`
           }
           alt={problem.title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

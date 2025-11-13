@@ -1,4 +1,4 @@
-import db from "../../../db.js";
+import db from "../../db.js";
 
 export const getCommentsByProblemId = async (problemId) => {
   const [rows] = await db.execute(

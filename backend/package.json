@@ -17,6 +17,7 @@
     "dev-auth": "cd backend-auth && nodemon index.js"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",

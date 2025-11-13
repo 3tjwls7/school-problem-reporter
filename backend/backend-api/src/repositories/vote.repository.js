@@ -1,4 +1,4 @@
-import db from "../../../db.js";
+import db from "../../db.js";
 
 // 사용자가 이미 공감했는지 확인
 export const checkUserVoted = async (userId, problemId) => {

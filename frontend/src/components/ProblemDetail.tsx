@@ -106,15 +106,17 @@ export function ProblemDetail({
 
       {/* 문제 이미지 */}
       <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 shadow-lg">
-        <ImageWithFallback
-          src={
-            problem.imageUrl.startsWith("http")
+      <ImageWithFallback
+        src={
+          problem.imageUrl.startsWith("http")
+            ? problem.imageUrl
+            : problem.imageUrl.startsWith("/uploads")
               ? problem.imageUrl
-              : `http://localhost:4002${problem.imageUrl}`
-          }
-          alt={problem.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+              : `/uploads/${problem.imageUrl}`
+        }
+        alt={problem.title}
+        className="h-full w-full object-cover"
+      />
 
         {problem.status && (
           <Badge

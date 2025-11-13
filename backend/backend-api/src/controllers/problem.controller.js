@@ -6,19 +6,24 @@ import {
   updateProblemService,
   getMyProblemsService,
 } from "../services/problem.service.js";
-import { verifyJWT } from "../../../backend-auth/src/utils/jwt.js";
+import axios from "axios";
 
 /** 문제 목록 조회 */
 export const getProblems = async (req, res) => {
   try {
     let userId = null;
-
-    // 토큰이 있으면 사용자 식별
     const authHeader = req.headers.authorization;
+
     if (authHeader) {
-      const token = authHeader.split(" ")[1];
-      const decoded = verifyJWT(token);
-      if (decoded) userId = decoded.id;
+      try {
+        // auth 서버에 토큰 검증 요청
+        const verifyRes = await axios.get("http://backend-auth:4001/auth/verify", {
+          headers: { Authorization: authHeader },
+        });
+        userId = verifyRes.data.user.id;
+      } catch {
+        userId = null; // 토큰이 유효하지 않아도 비로그인으로 처리
+      }
     }
 
     const problems = await getProblemsService(userId);
@@ -90,8 +95,6 @@ export const updateProblem = async (req, res) => {
     const { title, description, location } = req.body;
     const userId = req.user.id;
     const userRole = req.user.role;
-
-    // 새 이미지 파일이 있으면 업로드 경로 설정
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const updated = await updateProblemService(
@@ -104,12 +107,13 @@ export const updateProblem = async (req, res) => {
       userRole
     );
 
-    res.json(updated); // 수정된 문제 데이터 전체 반환
+    res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
+/** 내 신고글 조회 */
 export const getMyProblems = async (req, res) => {
   try {
     const userId = req.user.id;

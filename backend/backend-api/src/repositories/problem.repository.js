@@ -1,4 +1,4 @@
-import db from "../../../db.js";
+import db from "../../db.js";
 
 /** 전체 문제 조회 */
 export const getAllProblems = async () => {
