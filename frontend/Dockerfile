@@ -1,12 +1,18 @@
-# Stage 1: Build React App
-FROM node:18 AS build
+FROM node:20 AS build
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm install
+
+# npm registry 속도 개선
+RUN npm config set registry https://registry.npmmirror.com
+
+RUN npm install --legacy-peer-deps
+
 COPY . .
+COPY .env.production ./
+
 RUN npm run build
 
-# Stage 2: Serve with Nginx
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
