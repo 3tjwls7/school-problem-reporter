@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const axiosAuth = axios.create({
-  baseURL: process.env.REACT_APP_AUTH_BASE_URL
+  baseURL: "/"
 });
 
 axiosAuth.interceptors.request.use((config) => {

@@ -5,3 +5,4 @@ Dockerfile
 .env
 .env.local
 *.md
+.env.production
