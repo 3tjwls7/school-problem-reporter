@@ -7,6 +7,7 @@ dotenv.config({ path: "../.env" });
 
 const app = express();
 
+// CORS 설정
 app.use(cors({
   origin: "*",
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -15,6 +16,7 @@ app.use(cors({
 
 app.use(express.json());
 
+// /auth 하위 라우트
 app.use("/auth", authRoutes);
 
 app.listen(process.env.AUTH_PORT || 4001, () =>

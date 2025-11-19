@@ -31,10 +31,11 @@ export const verify = async (req, res) => {
 
   let token = header.startsWith("Bearer ") ? header.split(" ")[1] : header;
 
-  // 🔥 블랙리스트 확인
+  // 블랙리스트 확인
   const blacklisted = await redis.get(`blacklist:${token}`);
   if (blacklisted) return res.status(401).json({ message: "로그아웃된 토큰" });
 
+  // JWT 유효성 검사
   const decoded = verifyToken(token);
   if (!decoded) return res.status(401).json({ message: "유효하지 않은 토큰" });
 
