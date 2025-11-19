@@ -1,4 +1,3 @@
-// backend-api/src/middleware/auth.middleware.js
 import axios from "axios";
 import redis from "../../redis.js";
 

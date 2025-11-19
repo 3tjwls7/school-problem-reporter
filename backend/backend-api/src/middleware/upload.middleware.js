@@ -2,6 +2,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+/**
+ * multer 설정:
+ * - file-storage 폴더에 저장
+ * - 파일명 = timestamp + 랜덤값
+ */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.resolve("file-storage");

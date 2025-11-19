@@ -4,9 +4,10 @@ import {
   deleteCommentService,
 } from "../services/comment.service.js";
 
+// 특정 문제의 댓글 목록 조회
 export const getComments = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params;    // 문제 ID
     const comments = await fetchCommentsService(id);
     res.json(comments);
   } catch (err) {
@@ -14,9 +15,10 @@ export const getComments = async (req, res) => {
   }
 };
 
+// 댓글 작성 (로그인 필요)
 export const createComment = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params;    // 문제 ID
     const { content } = req.body;
     const authorId = req.user.id;
 
@@ -27,6 +29,7 @@ export const createComment = async (req, res) => {
   }
 };
 
+// 댓글 삭제 (본인 또는 관리자)
 export const removeComment = async (req, res) => {
   try {
     const { cid } = req.params;        // 댓글 ID

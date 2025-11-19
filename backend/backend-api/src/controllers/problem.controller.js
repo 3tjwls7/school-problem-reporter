@@ -8,7 +8,9 @@ import {
 } from "../services/problem.service.js";
 import axios from "axios";
 
-/** 문제 목록 조회 */
+// 문제 목록 조회 
+// - 로그인 X: hasVoted = false
+// - 로그인 O: auth 서버에 토큰 검증 + 투표 여부 표시
 export const getProblems = async (req, res) => {
   try {
     let userId = null;
@@ -33,12 +35,13 @@ export const getProblems = async (req, res) => {
   }
 };
 
-/** 문제 등록 */
+// 문제 등록 (로그인 + 이미지 업로드 필수)
 export const createNewProblem = async (req, res) => {
   try {
     const { title, description, location } = req.body;
     const authorId = req.user.id;
 
+    // multer가 저장한 파일 확인
     if (!req.file) {
       return res.status(400).json({ message: "이미지 파일이 없습니다." });
     }
@@ -60,12 +63,12 @@ export const createNewProblem = async (req, res) => {
   }
 };
 
-/** 문제 상태 변경 (관리자 전용) */
+// 문제 상태 변경 (관리자 전용 기능)
 export const changeProblemStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const userRole = req.user.role;
+    const { id } = req.params;        // 문제 ID
+    const { status } = req.body;      // 변경될 상태
+    const userRole = req.user.role;   // 권한 체크
 
     const result = await changeProblemStatusService(id, status, userRole);
     res.json(result);
@@ -74,7 +77,7 @@ export const changeProblemStatus = async (req, res) => {
   }
 };
 
-/** 문제 삭제 */
+// 문제 삭제 (작성자 또는 관리자)
 export const deleteProblem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -88,13 +91,14 @@ export const deleteProblem = async (req, res) => {
   }
 };
 
-/** 문제 수정 */
+// 문제 수정
 export const updateProblem = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, location } = req.body;
     const userId = req.user.id;
     const userRole = req.user.role;
+    // 이미지 변경 여부
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const updated = await updateProblemService(
@@ -113,7 +117,7 @@ export const updateProblem = async (req, res) => {
   }
 };
 
-/** 내 신고글 조회 */
+// 내 신고글 조회
 export const getMyProblems = async (req, res) => {
   try {
     const userId = req.user.id;

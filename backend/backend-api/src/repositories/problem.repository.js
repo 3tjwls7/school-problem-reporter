@@ -1,6 +1,6 @@
 import db from "../../db.js";
 
-/** 전체 문제 조회 */
+// 모든 문제 조회 + 작성자 조인
 export const getAllProblems = async () => {
   const [rows] = await db.execute(`
     SELECT 
@@ -13,7 +13,7 @@ export const getAllProblems = async () => {
   return rows;
 };
 
-/** 문제 등록 */
+// 문제 신규 등록
 export const createProblem = async ({
   title,
   description,
@@ -27,12 +27,12 @@ export const createProblem = async ({
   );
 };
 
-/** 문제 상태 변경 */
+// 문제 상태(진행중/해결됨 등) 변경
 export const updateProblemStatus = async (id, status) => {
   await db.execute("UPDATE problems SET status = ? WHERE id = ?", [status, id]);
 };
 
-/** 문제 삭제 */
+// 문제 삭제 (관리자 or 본인)
 export const deleteProblem = async (id, authorId, userRole) => {
   if (userRole === "admin") {
     await db.execute("DELETE FROM problems WHERE id = ?", [id]);
@@ -47,7 +47,7 @@ export const deleteProblem = async (id, authorId, userRole) => {
   }
 };
 
-/** 문제 수정 */
+// 문제 수정
 export const updateProblem = async (
   id,
   title,
@@ -81,6 +81,7 @@ export const updateProblem = async (
   }
 };
 
+// 내 신고글 목록 가져오기
 export const getMyProblemsRepo = async (userId) => {
   const [rows] = await db.query(
     "SELECT * FROM problems WHERE authorId = ? ORDER BY createdAt DESC",

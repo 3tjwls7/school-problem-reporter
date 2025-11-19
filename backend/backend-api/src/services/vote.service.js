@@ -5,6 +5,12 @@ import {
   getVoteCount, // 새로 추가할 함수
 } from "../repositories/vote.repository.js";
 
+/**
+ * 공감(좋아요) 토글
+ * - 이미 눌렀으면 삭제
+ * - 안 눌렀으면 추가
+ * - 반영 후 최신 votes 수 반환
+ */
 export const toggleVoteService = async (userId, problemId) => {
   const alreadyVoted = await checkUserVoted(userId, problemId);
 

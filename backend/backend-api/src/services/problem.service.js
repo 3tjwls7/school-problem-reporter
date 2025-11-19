@@ -11,9 +11,9 @@ import {
 
 
 /**
- * 문제 목록 조회 서비스
- * - 로그인 여부에 따라 hasVoted 표시
- * - 7일 이상 경과 && 미해결 상태면 isOverdue = true
+ * 전체 문제 조회 서비스
+ * - 7일 이상 미해결이면 isOverdue = true
+ * - 로그인 시 자신의 투표 여부 hasVoted 포함
  */
 export const getProblemsService = async (userId = null) => {
   const problems = await getAllProblems();
@@ -26,12 +26,12 @@ export const getProblemsService = async (userId = null) => {
     return { ...p, isOverdue };
   });
 
-  // 로그인 안 한 경우
+  // 로그인 X → 투표 여부 false
   if (!userId) {
     return problemsWithFlags.map((p) => ({ ...p, hasVoted: false }));
   }
 
-  // 로그인한 경우 → 투표 여부 표시
+  // 로그인 O → DB에서 본인 투표 내역 조회
   const [votedRows] = await db.execute(
     "SELECT problemId FROM votes WHERE userId = ?",
     [userId]
@@ -44,9 +44,7 @@ export const getProblemsService = async (userId = null) => {
   }));
 };
 
-/**
- * 문제 등록
- */
+// 문제 등록 (입력 검증 + repository 호출)
 export const createProblemService = async ({
   title,
   description,
@@ -62,9 +60,7 @@ export const createProblemService = async ({
   return { message: "문제가 등록되었습니다!" };
 };
 
-/**
- * 문제 상태 변경 (관리자 전용)
- */
+// 관리자만 상태 변경 가능 
 export const changeProblemStatusService = async (id, status, userRole) => {
   if (userRole !== "admin") {
     throw new Error("관리자만 상태를 변경할 수 있습니다.");
@@ -74,17 +70,13 @@ export const changeProblemStatusService = async (id, status, userRole) => {
   return { status, message: "문제 상태가 변경되었습니다." };
 };
 
-/**
- * 문제 삭제
- */
+// 문제 삭제
 export const deleteProblemService = async (id, userId, userRole) => {
   await deleteProblem(id, userId, userRole);
   return { message: "문제가 삭제되었습니다." };
 };
 
-/**
- * 문제 수정
- */
+// 문제 수정
 export const updateProblemService = async (
   id,
   title,
