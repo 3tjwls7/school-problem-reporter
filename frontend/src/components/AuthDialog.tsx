@@ -13,10 +13,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
 import { Checkbox } from "./ui/checkbox";
 
 interface AuthDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onLogin: (username: string, password: string) => void;
-  onSignup: (username: string, email: string, password: string, isAdmin: boolean) => void;
+  open: boolean;                            // 모달 열림 여부
+  onOpenChange: (open: boolean) => void;    // 모달 ON/OFF 제어
+  onLogin: (username: string, password: string) => void;  // 로그인 핸들러 (부모로 전달)
+  onSignup: (username: string, email: string, password: string, isAdmin: boolean) => void;  // 회원가입 핸들러
 }
 
 export function AuthDialog({
@@ -25,6 +25,7 @@ export function AuthDialog({
   onLogin,
   onSignup,
 }: AuthDialogProps) {
+  // 입력값 상태 관리
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupUsername, setSignupUsername] = useState("");
@@ -32,10 +33,12 @@ export function AuthDialog({
   const [signupPassword, setSignupPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // 로그인 제출 처리
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    // 기본 유효성 검사
     if (loginUsername && loginPassword) {
-      onLogin(loginUsername, loginPassword);
+      onLogin(loginUsername, loginPassword);  // 부모 컴포넌트(App)로 전달
       setLoginUsername("");
       setLoginPassword("");
     } else {
@@ -43,10 +46,13 @@ export function AuthDialog({
     }
   };
 
+  // 회원가입 제출 처리
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    // 기본 유효성 검사
     if (signupUsername && signupEmail && signupPassword) {
       onSignup(signupUsername, signupEmail, signupPassword, isAdmin);
+      // 입력값 초기화
       setSignupUsername("");
       setSignupEmail("");
       setSignupPassword("");
@@ -57,6 +63,7 @@ export function AuthDialog({
   };
 
   return (
+    // 로그인/회원가입 모달 컴포넌트
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="
@@ -64,20 +71,21 @@ export function AuthDialog({
           bg-background border shadow-lg rounded-xl sm:max-w-[425px] p-6
         "
       >
+        {/* 모달 상단 타이틀 영역 */}
         <DialogHeader>
           <DialogTitle>로그인 / 회원가입</DialogTitle>
           <DialogDescription>
             학교 계정으로 로그인하거나 새로운 계정을 만드세요.
           </DialogDescription>
         </DialogHeader>
-
+        {/* 탭: 로그인 / 회원가입 전환 */}
         <Tabs defaultValue="login" className="mt-4">
           <TabsList className="grid w-full grid-cols-2 p-1">
             <TabsTrigger value="login">로그인</TabsTrigger>
             <TabsTrigger value="signup">회원가입</TabsTrigger>
           </TabsList>
 
-          {/* Login Tab */}
+          {/* 로그인 탭 */}
           <TabsContent value="login" className="mt-6">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
@@ -107,7 +115,7 @@ export function AuthDialog({
             </form>
           </TabsContent>
 
-          {/* Signup Tab */}
+          {/* 회원가입 탭 */}
           <TabsContent value="signup" className="mt-6">
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">

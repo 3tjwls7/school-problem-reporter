@@ -29,6 +29,7 @@ import {
 import axiosAuth from "./api/axiosAuth";
 
 export default function App() {
+  // 전역 상태 관리
   const [problems, setProblems] = useState<Problem[]>([]);
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(null);
@@ -51,7 +52,7 @@ export default function App() {
     }
   };
 
-  // 🔥 문제 삭제
+  // 문제 삭제
   const handleDeleteProblem = async (id: number) => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
@@ -66,7 +67,7 @@ export default function App() {
     }
   };
 
-  // 🔥 문제 수정 제출
+  // 문제 수정 제출
   const handleSubmitEdit = async (updatedData: {
     title: string;
     description: string;
@@ -76,6 +77,7 @@ export default function App() {
     if (!editingProblem) return;
 
     try {
+      // FormData 구성
       const formData = new FormData();
       formData.append("title", updatedData.title);
       formData.append("description", updatedData.description);
@@ -84,6 +86,7 @@ export default function App() {
 
       const updated = await updateProblemAPI(editingProblem.id, formData);
 
+      // UI 업데이트
       setProblems((prev) =>
         prev.map((p) =>
           p.id === editingProblem.id
@@ -107,6 +110,7 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
+    // 로그인 검증
     if (token) {
       axiosAuth
         .get("/auth/verify")
@@ -121,7 +125,7 @@ export default function App() {
     handleProblemUpdated();
   }, []);
 
-  // 댓글 목록 로딩
+  // 문제 상세 → 댓글 목록 로딩
   useEffect(() => {
     if (!selectedProblemId) return;
 
@@ -129,7 +133,7 @@ export default function App() {
       .then((data) => {
         const mapped = data.map((c: any) => ({
           ...c,
-          isOwn: c.username === currentUser,
+          isOwn: c.username === currentUser, // 본인 댓글 여부
         }));
 
         setComments((prev) => ({
@@ -145,6 +149,7 @@ export default function App() {
     try {
       const result = await toggleVoteAPI(id);
 
+      // votes + voted 상태 업데이트
       setProblems((prev) =>
         prev.map((p) =>
           p.id === id ? { ...p, votes: result.votes, hasVoted: result.voted } : p
@@ -188,6 +193,7 @@ export default function App() {
 
     toast.success("로그아웃되었습니다.");
 
+    // 상태 초기화를 위해 새로고침
     setTimeout(() => window.location.reload(), 300);
   };
 
@@ -248,7 +254,7 @@ export default function App() {
     }
   };
 
-  // 문제 상태 변경
+  // 관리자: 문제 상태 변경
   const handleStatusChange = async (
     id: number,
     newStatus: "pending" | "in-progress" | "resolved"
@@ -263,11 +269,13 @@ export default function App() {
       toast.error("상태 변경 실패");
     }
   };
-
+  // 현재 선택한 문제 객체
   const selectedProblem = problems.find((p) => p.id === selectedProblemId);
 
+  // UI 렌더링
   return (
     <div className="min-h-screen bg-background">
+      {/* 네비바 */}
       <Navbar
         onCreateClick={() => {
           if (!isLoggedIn) {
@@ -308,7 +316,9 @@ export default function App() {
             />
 
           ) : (
+            // 기본 화면(문제 목록 + overdue 영역)
             <div className="space-y-8">
+              {/* 상단 안내 카드 */}
               <div className="rounded-2xl border bg-card p-6 shadow-sm md:p-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary shadow-md">
@@ -323,7 +333,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-  
+              {/* 해결되지 않은 문제(overdue) 영역 */}
               {problems.some((p) => p.isOverdue) && (
                 <div className="rounded-xl border-2 border-red-300 bg-red-50 p-5 space-y-4 shadow-sm">
                   <div className="flex items-center gap-3">
@@ -359,7 +369,7 @@ export default function App() {
               )}
   
 
-              {/* 기본 문제 리스트 */}
+              {/* 전체 문제 리스트 */}
               <ProblemList
                 problems={problems}
                 onVote={handleVote}
@@ -370,13 +380,13 @@ export default function App() {
 
         </main>
 
-
+      {/* 문제 작성 모달 */}
       <CreateProblemDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSubmit={handleProblemUpdated}
       />
-
+      {/* 문제 수정 모달 */}
       {editingProblem && (
         <EditProblemDialog
           open={isEditDialogOpen}
@@ -385,14 +395,14 @@ export default function App() {
           onSubmit={handleSubmitEdit}   // 수정 핸들러 연결
         />
       )}
-
+      {/* 로그인/회원가입 모달 */}
       <AuthDialog
         open={isAuthDialogOpen}
         onOpenChange={setIsAuthDialogOpen}
         onLogin={handleLogin}
         onSignup={handleSignup}
       />
-
+      {/* 전역 Toast UI */}
       <Toaster />
     </div>
   );
